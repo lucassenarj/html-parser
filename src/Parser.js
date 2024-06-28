@@ -18,7 +18,8 @@ class Parser {
    */
   parse (string) {
     this._string = string;
-    this._tokenizer.init(string);
+    this._tokenizer.init(this._string);
+    console.log(this._string);
 
     // Prime the tokenizer to obtain the first
     // token which is our lookahead. The lookahead is
@@ -51,6 +52,7 @@ class Parser {
    *  ;
    */
   Literal() {
+    console.log("Literal: ", this._lookahead);
     switch (this._lookahead.type) {
       case "NUMBER":
         return this.NumericLiteral();
@@ -81,7 +83,7 @@ class Parser {
    *  ;
    */
   NumericLiteral() { // should return an AST Node
-    const token = this._eat('NUMBER');
+    const token = this._eat("NUMBER");
     return {
       type: "NumericLiteral",
       value: Number(token.value)

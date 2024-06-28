@@ -1,4 +1,32 @@
 /**
+ * Tokenizer Spec
+ */
+const Spec = [
+  // -------------------------------
+  // Whitespace:
+  [/^\s+/, null],
+
+  // -------------------------------
+  // Comments:
+
+  // Skip single-line comments:
+  [/^\/\/.*/, null],
+
+  // Skip multi-line comments:
+  [/^\/\*[\s\S]*?\*\//, null],
+
+  // -------------------------------
+  // Numbers:
+  [/^\d+/, "NUMBER"],
+  
+  // -------------------------------
+  // Strings:
+  [/^"[^"]*"/, "STRING"],
+  [/^'[^']*'/, "STRING"],
+  
+];
+
+/**
  * Tokenizer class.
  * 
  * Lazily pulls a token form a stream.
@@ -32,40 +60,47 @@ class Tokenizer {
    * Obtains next token
    */
   getNextToken() {
+    console.log("getNextToken(): ");
     if (!this.hasMoreTokens()) {
-      return null
+      return null;
     }
 
     const string = this._string.slice(this._cursor);
+    
+    for (const [regexp, tokenType] of Spec) {
+      const tokenValue = this._match(regexp, string);
 
-    // Numbers:
-    if (!Number.isNaN(Number(string[0]))) {
-      let number = "";
+      if (tokenValue == null) {
+        continue;
+      }
 
-      while (!Number.isNaN(Number(string[this._cursor]))) {
-        number += string[this._cursor++];
+      // Should skip token, e.g. whitepace.
+      if (tokenType === null) {
+        return this.getNextToken();
       }
 
       return {
-        type: "NUMBER",
-        value: number,
-      }
+        type: tokenType,
+        value: tokenValue,
+      };
     }
 
-    // Strings:
-    if (string[0] === '"') {
-      let chars = '';
-      do {
-        chars += string[this._cursor++];
-      } while(string[this._cursor] !== '"' && !this.isEOF());
-      chars += this._cursor++;
-      return {
-        type: "STRING",
-        value: chars,
-      }
+    throw new SyntaxError(`Unexpected token: "${string[0]}"`);
+  }
+
+  /**
+   * Matches a token for a regular expression.
+   */
+  _match(regexp, string) {
+    let token = regexp.exec(string);
+
+    if (!token) {
+      return null; 
     }
 
-    return null;
+    this._cursor += token[0].length;
+
+    return token[0];
   }
 }
 
